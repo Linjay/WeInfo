@@ -3,6 +3,8 @@ import urllib2
 from bs4 import BeautifulSoup
 import re
 
+total = 0
+
 class Post():
 	title = ''
 	summary = ''
@@ -18,30 +20,51 @@ class WxParser:
 
 	##处理单个TAB的热门文章
 	def swTab(self, tabKey):
+
+		print "\n\n\n" + tabKey + "\n============================================="
 		url = "http://weixin.sogou.com/pcindex/pc/" + tabKey + "/" + tabKey + ".html"
+		self.parsePostList(url, tabKey)
+		for x in xrange(1,100):
+			moreUrl = "http://weixin.sogou.com/pcindex/pc/" + tabKey + "/" + str(x) + ".html"
+			print "================================>>>>>>>>"
+			print moreUrl
+			try:
+				if self.parsePostList(moreUrl, tabKey) is False:
+					break
+			except Exception,ex:
+				print "Over"
+				break
+			pass
+
+	def parsePostList(self, url, tabKey):
 		doc = urllib2.urlopen(url)
+		if doc is None:
+			return False
 		soup = BeautifulSoup(doc)
-		#soup.originalEncoding
-		for x in xrange(1,30):
-			tuigs = tabKey + '_tit_' + str(x) #title
-			iuigs = tabKey + "_img_" + str(x) #image
-			suigs = tabKey + '_summary_' + str(x) #summary
-			ta = soup.find(attrs={'uigs' : re.compile(tuigs + "$")})
-			ia = soup.find(attrs={'uigs' : re.compile(iuigs + "$")})
-			sa = soup.find(attrs={'uigs' : re.compile(suigs + "$")})
-			if ia is None:
+		newInfos = soup.findAll(attrs={'class' : re.compile("wx-news-info2$")})
+		for new in newInfos:
+			tuigs = tabKey + '_tit_' #title
+			iuigs = tabKey + "_img_" #image
+			suigs = tabKey + '_summary_' #summary
+			ta = new.find(attrs={'uigs' : re.compile(tuigs + "[0-9]{1,}$")})
+			sa = new.find(attrs={'uigs' : re.compile(suigs + "[0-9]{1,}$")})
+			if ta is None:
 				continue
+			index = ta.attrs.get('uigs').split("_tit_", 1)[1]
+
+			ia = soup.find(attrs={'uigs' : re.compile(iuigs + index + "$")})
 			imghref = ia.find('img').attrs.get('src')
 			title = ta.text
 			link = ta.attrs.get('href')
 			summary = sa.text
-			print str(x) + ":"
-			print title
-			print summary
+			print "-----------------------------"
+			print "title:" + title
+			print "summary:" + summary
 			print 'image=' + imghref
 			print 'link=' + link
-			pass
-		pass
+			global total
+			total = total + 1
+		return True
 
 	#处理所有TAB的热门文章
 	def dealTabNews(self, soup):
@@ -74,19 +97,19 @@ class WxParser:
 			print title
 			print summary
 			print link
-			pass
 
 	def parse(self):
 		doc = urllib2.urlopen("http://weixin.sogou.com/")
 		soup = BeautifulSoup(doc)
 		soup.originalEncoding
-		self.dealHotWords(soup)
-		self.dealTopNews(soup)
+		#self.dealHotWords(soup)
+		#self.dealTopNews(soup)
 		self.dealTabNews(soup)
 
 
 parser = WxParser()
 parser.parse()
+print "total=" + total
 
  
 
