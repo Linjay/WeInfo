@@ -33,22 +33,15 @@ class WxParser:
 				continue
 			imghref = ia.find('img').attrs.get('src')
 			title = ta.text
+			link = ta.attrs.get('href')
 			summary = sa.text
 			print str(x) + ":"
 			print title
 			print summary
-			print 'imageHref=' + imghref
+			print 'image=' + imghref
+			print 'link=' + link
 			pass
 		pass
-
-	def unescape(self, s):
-		if s is None:
-			return 'None'
-		s = s.replace("&lt;", "<")
-		s = s.replace("&gt;", ">")
-		# this has to be last:
-		s = s.replace("&amp;", "&")
-		return s
 
 	#处理所有TAB的热门文章
 	def dealTabNews(self, soup):
@@ -58,7 +51,7 @@ class WxParser:
 		for x in tab:
 			ctabkey = x.attrs.get('uigs')
 			if str(ctabkey).startswith('pc'):
-				swTab(ctabkey)
+				self.swTab(ctabkey)
 			pass
 
 	#处理右上角热词
@@ -67,7 +60,8 @@ class WxParser:
 		print "HOT WORDS"
 		print "============================================="
 		for label in hotwordsLabels:
-			print label.text
+			print label.attrs.get('title')
+			print label.attrs.get('href')
 		pass
 
 	#处理顶部导航热门文章
@@ -86,7 +80,9 @@ class WxParser:
 		doc = urllib2.urlopen("http://weixin.sogou.com/")
 		soup = BeautifulSoup(doc)
 		soup.originalEncoding
+		self.dealHotWords(soup)
 		self.dealTopNews(soup)
+		self.dealTabNews(soup)
 
 
 parser = WxParser()
