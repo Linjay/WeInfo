@@ -109,7 +109,7 @@ class WxParser:
 
 parser = WxParser()
 parser.parse()
-print "total=" + total
+print "total=" + str(total)
 
  
 
